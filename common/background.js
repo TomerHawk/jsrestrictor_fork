@@ -26,7 +26,7 @@ var tab_status = {};
 var tab_urls = {};
 
 function updateBadge(text, tabid) {
-	browser.browserAction.setBadgeText({text: text, tabId: tabid});
+	browser.browserAction.setBadgeText({ text: text, tabId: tabid });
 }
 
 // get active tab and pass it
@@ -87,15 +87,17 @@ function cspRequestProcessor(details) {
 			modified = true;
 		}
 	}
-	return modified ? {responseHeaders: headers} : {};
+	return modified ? { responseHeaders: headers } : {};
 }
 // Attach listener only in chromium where the WASM module is instantiated directly in
 // page context, subject to the page's CSP. Code inserted as script tags isn't subject
 // to script-src origins, it is, however, subject to the 'unsafe' group of script evaluation rules.
 if (typeof browser_polyfill_used !== "undefined" && browser_polyfill_used) {
 	browser.webRequest.onHeadersReceived.addListener(cspRequestProcessor,
-		{urls: ["<all_urls>"],
-		types: ["main_frame", "sub_frame"]},
+		{
+			urls: ["<all_urls>"],
+			types: ["main_frame", "sub_frame"]
+		},
 		["blocking", "responseHeaders"]
 	);
 }
@@ -121,7 +123,7 @@ async function connected(port) {
 			console.debug("Could not get current level for popup", e);
 		}
 		port.postMessage(current_level);
-		port.onMessage.addListener(function(msg) {
+		port.onMessage.addListener(function (msg) {
 			port.postMessage(current_level);
 		});
 	}
@@ -132,7 +134,7 @@ browser.runtime.onConnect.addListener(connected);
  * Listen to detected API calls and update badge accordingly
  */
 fpDb.add_observer({
-	notify: function(api, tabid, type, count) {
+	notify: function (api, tabid, type, count) {
 		let group_name = wrapping_groups.wrapper_map[api];
 		if (!group_name) {
 			return; // The API does not belong to any group

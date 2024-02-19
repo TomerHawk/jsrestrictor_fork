@@ -22,14 +22,17 @@
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
 
-sed -i "/.*\/\/DEF_FPD_FILES_S.*/,/.*\/\/DEF_FPD_FILES_E.*/{/.*\/\/DEF_FPD_FILES_S.*/!{/.*\/\/DEF_FPD_FILES_E.*/!d}}" $1/fp_levels.js
+# Use a temporary file for in-place editing
+TMP_FILE=$(mktemp /tmp/fp_levels_tmp.XXXXXX)
+trap 'rm -f "$TMP_FILE"' EXIT
 
-CONFIG_FILES=`find common/fp_config/* -maxdepth 0 -name "*.json"`
-ACC=""
-for FILE in $CONFIG_FILES
-do
-	ACC="${ACC}\"`basename ${FILE} .json`\""
-  ACC="${ACC}, "
-done
+sed '/.*\/\/DEF_FPD_FILES_S.*/,/.*\/\/DEF_FPD_FILES_E.*/{/.*\/\/DEF_FPD_FILES_S.*/!{/.*\/\/DEF_FPD_FILES_E.*/!d;}}' "$1/fp_levels.js" > "$TMP_FILE"
+mv "$TMP_FILE" "$1/fp_levels.js"
 
-sed -i "/.*\/\/DEF_FPD_FILES_S.*/a var fp_config_files = [${ACC::-2}]" $1/fp_levels.js
+CONFIG_FILES=$(find common/fp_config/* -maxdepth 0 -name "*.json")
+ACC=$(printf "\"%s\"," $(basename -s .json $CONFIG_FILES))
+
+if [ -n "$ACC" ]; then
+  awk -v config_files="$ACC" '/.*\/\/DEF_FPD_FILES_S.*/{print; print "var fp_config_files = [" config_files "];"; next}1' "$1/fp_levels.js" > "$TMP_FILE"
+  mv "$TMP_FILE" "$1/fp_levels.js"
+fi
